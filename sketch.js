@@ -4,10 +4,11 @@ var potions = [[], [], [], [], [], [], [], []];
 var backgroundImage; 
 var potionImages = [];
 var boardImage; 
+var collectedAnimation;
 
 // Sound Variables
 var bgmSound;
-var collectedSound;
+var collectedSound = [];
 
 // Game Management Variables
 var clickedX = 0;
@@ -19,7 +20,11 @@ function preload() {
   for (var i = 0; i < 5; i++){
     potionImages[i] = loadImage(`./images/potion${i+1}.png`); 
   }
+  for (var i = 0; i < 3; i++){
+    collectedSound[i] = loadSound(`./sound/positive${i+1}.wav`);
+  }
   backgroundImage = loadImage('./images/background.jpg');
+  collectedAnimation = loadAnimation('./images/sparkle/burst0001.png', './images/sparkle/burst0060.png');
 }
 
 function setup() {
@@ -112,6 +117,10 @@ function gameMoving() {
 
   if (movingTimer == 0) {
     stopAllPotions();
+
+    // Display effect when gems are collected
+    createCollectedEffect();
+
     gameMode = 'gamePlaying';
   }
 }
@@ -125,6 +134,23 @@ function stopAllPotions() {
       // Arange the positons
       potions[j][i].position.x = getPositionX(i);
       potions[j][i].position.y = getPositionY(j);
+    }
+  }
+}
+
+function createCollectedEffect() {
+  // Play Collected Sound
+  collectedSound[floor(random(3))].play();
+
+  // Make a sparkle effect
+  for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < 8; i++) {
+      // Make a sparkle effect sprite in the place of collected gems
+      var effect = createSprite(getPositionX(i), getPositionY(j));
+      // Add an animation to the sparkle effect
+      effect.addAnimation('collected', collectedAnimation);
+      // Set how long the sprite is displayed (it will automatically disappear)
+      effect.life = 30;
     }
   }
 }
