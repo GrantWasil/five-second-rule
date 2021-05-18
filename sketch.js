@@ -15,12 +15,13 @@ var clickedX = 0;
 var clickedY = 0;
 var movingTimer = 0;
 var gameMode = "gamePlaying";
+var angle = 0;
+var score = 0;
+var timer = 5;
 
 function preload() {
   for (var i = 0; i < 5; i++) {
     potionImages[i] = loadImage(`./images/potion${i + 1}.png`);
-  }
-  for (var i = 0; i < 3; i++) {
     collectedSound[i] = loadSound(`./sound/positive${i + 1}.wav`);
   }
   backgroundImage = loadImage("./images/background.jpg");
@@ -33,11 +34,24 @@ function preload() {
 function setup() {
   createCanvas(745, 600);
 
+  // Setup Text
+  fill(255, 250, 220);
+  textFont('bevan');
+  textAlign(CENTER);
+  textStyle(BOLD);
+  textSize(50);
+
   createBoard();
 }
 
 function draw() {
   background(backgroundImage);
+  text('TIMER', 95, 50);
+  text(timer, 95, 120);
+  text('SCORE', 650, 50);
+  text(score, 650, 120);
+
+
   drawSprites();
 
   switch (gameMode) {
@@ -49,6 +63,9 @@ function draw() {
       break;
     case "gameMoving":
       gameMoving();
+      break;
+    case "gameFinished":
+      gameFinished();
       break;
   }
 }
@@ -87,25 +104,46 @@ function potionClicked(potion) {
       gameMode = "gameClickedFirstPotion";
       break;
     case "gameClickedFirstPotion":
-      var colorNumber1 = potions[clickedY][clickedX].colorNumber;
-      var colorNumber2 = potion.colorNumber;
-      setPotionInformation(
-        potion.cellX,
-        potion.cellY,
-        clickedX,
-        clickedY,
-        colorNumber1
-      );
-      setPotionInformation(
-        clickedX,
-        clickedY,
-        potion.cellX,
-        potion.cellY,
-        colorNumber2
-      );
-      movingTimer = 30;
-      gameMode = "gameMoving";
+      // Return the potion to it's original size 
+      potions[clickedY][clickedX].scale = 1;
+      if (isNeighbor(clickedX, clickedY, potion.cellX, potion.cellY)) {
+        var colorNumber1 = potions[clickedY][clickedX].colorNumber;
+        var colorNumber2 = potion.colorNumber;
+        setPotionInformation(
+          potion.cellX,
+          potion.cellY,
+          clickedX,
+          clickedY,
+          colorNumber1
+        );
+        setPotionInformation(
+          clickedX,
+          clickedY,
+          potion.cellX,
+          potion.cellY,
+          colorNumber2
+        );
+        movingTimer = 30;
+        gameMode = "gameMoving";
+      } else {
+        gameMode = "gamePlaying";
+      }
       break;
+  }
+}
+
+// Validates that potions are neighbors
+function isNeighbor(x1, y1, x2, y2) {
+  if (x1 == x2) {
+    if (y1 == y2 - 1 || y1 == y2 + 1) {
+      return true;
+    }
+  } else if (y1 == y2) {
+    if (x1 == x2 - 1 || x1 == x2 + 1) {
+      return true;
+    }
+  } else {
+    return false;
   }
 }
 
@@ -123,9 +161,17 @@ function setPotionInformation(toX, toY, fromX, fromY, fromColorNumber) {
   potions[toY][toX].velocity.y = (getPositionY(toY) - getPositionY(fromY)) / 30;
 }
 
-function gamePlaying() {}
+function gamePlaying() {
+  if (timer <= 0){
+    gameMode = 'gameFinished';
+  }
+}
 
-function gameClickedFirstPotion() {}
+function gameClickedFirstPotion() {
+  // Change the angle and size
+  angle += 0.1;
+  potions[clickedY][clickedX].scale = 1 + sin(angle) * 0.1;
+}
 
 function gameMoving() {
   movingTimer--;
@@ -138,9 +184,10 @@ function gameMoving() {
     var collectedPotionsCount = countCollectedPotions();
     // Check if potions are collected
     if (collectedPotionsCount > 0) {
+      score += (collectedPotionsCount * 10);
       // Display effect when potions are collected
       createCollectedEffect();
-      // Drop 
+      // Drop
       collectPotions();
       movingTimer = 30;
     } else {
@@ -221,7 +268,7 @@ function countCollectedPotions() {
 
 function createCollectedEffect() {
   // Play Collected Sound
-  collectedSound[floor(random(3))].play();
+  collectedSound[floor(random(6))].play();
 
   // Make a sparkle effect
   for (var j = 0; j < 8; j++) {
@@ -231,7 +278,7 @@ function createCollectedEffect() {
         var effect = createSprite(getPositionX(i), getPositionY(j) + 8);
         // Add an animation to the sparkle effect
         effect.addAnimation("collected", collectedAnimation);
-        // Set how long the sprite is displayed 
+        // Set how long the sprite is displayed
         effect.life = 40;
       }
     }
@@ -240,25 +287,37 @@ function createCollectedEffect() {
 
 // Erase collected potions and line up more
 function collectPotions() {
-  for (var i = 0; i < 8; i++){
+  for (var i = 0; i < 8; i++) {
     var collectedCount = 0;
-    for (var j = 7; j >= 0; j--){
-      if (potions[j][i].isCollected){
+    for (var j = 7; j >= 0; j--) {
+      if (potions[j][i].isCollected) {
         collectedCount++;
       } else {
-        setPotionInformation(i, j + collectedCount, i, j, potions[j][i].colorNumber);
+        setPotionInformation(
+          i,
+          j + collectedCount,
+          i,
+          j,
+          potions[j][i].colorNumber
+        );
       }
     }
-    for (var j = 0; j < collectedCount; j++){
+    for (var j = 0; j < collectedCount; j++) {
       setPotionInformation(i, j, i, j - collectedCount, floor(random(5)));
     }
   }
 }
 
 function getPositionX(cellX) {
-  return 190 + 54 * cellX;
+  return 190 + 55 * cellX;
 }
 
 function getPositionY(cellY) {
-  return 70 + 64 * cellY;
+  return 70 + 65 * cellY;
+}
+
+function gameFinished() {
+  background(0, 0, 0, 120);
+  text('Finished!', width/2, height/2);
+  text(score, width/2, height/2 + 60);
 }
