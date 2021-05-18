@@ -24,6 +24,7 @@ function preload() {
     potionImages[i] = loadImage(`./images/potion${i + 1}.png`);
     collectedSound[i] = loadSound(`./sound/positive${i + 1}.wav`);
   }
+  bgmSound = loadSound('./sound/background.wav');
   backgroundImage = loadImage("./images/background.jpg");
   collectedAnimation = loadAnimation(
     "./images/sparkle/burst0001.png",
@@ -34,9 +35,10 @@ function preload() {
 function setup() {
   createCanvas(745, 600);
 
+  bgmSound.loop();
   // Setup Text
   fill(255, 250, 220);
-  textFont('bevan');
+  textFont("bevan");
   textAlign(CENTER);
   textStyle(BOLD);
   textSize(50);
@@ -46,11 +48,10 @@ function setup() {
 
 function draw() {
   background(backgroundImage);
-  text('TIMER', 95, 50);
+  text("TIMER", 95, 50);
   text(timer, 95, 120);
-  text('SCORE', 650, 50);
+  text("SCORE", 650, 50);
   text(score, 650, 120);
-
 
   drawSprites();
 
@@ -104,7 +105,7 @@ function potionClicked(potion) {
       gameMode = "gameClickedFirstPotion";
       break;
     case "gameClickedFirstPotion":
-      // Return the potion to it's original size 
+      // Return the potion to it's original size
       potions[clickedY][clickedX].scale = 1;
       if (isNeighbor(clickedX, clickedY, potion.cellX, potion.cellY)) {
         var colorNumber1 = potions[clickedY][clickedX].colorNumber;
@@ -162,8 +163,8 @@ function setPotionInformation(toX, toY, fromX, fromY, fromColorNumber) {
 }
 
 function gamePlaying() {
-  if (timer <= 0){
-    gameMode = 'gameFinished';
+  if (timer <= 0) {
+    gameMode = "gameFinished";
   }
 }
 
@@ -184,7 +185,7 @@ function gameMoving() {
     var collectedPotionsCount = countCollectedPotions();
     // Check if potions are collected
     if (collectedPotionsCount > 0) {
-      score += (collectedPotionsCount * 10);
+      score += collectedPotionsCount * 10;
       // Display effect when potions are collected
       createCollectedEffect();
       // Drop
@@ -318,6 +319,6 @@ function getPositionY(cellY) {
 
 function gameFinished() {
   background(0, 0, 0, 120);
-  text('Finished!', width/2, height/2);
-  text(score, width/2, height/2 + 60);
+  text("Finished!", width / 2, height / 2);
+  text(score, width / 2, height / 2 + 60);
 }
