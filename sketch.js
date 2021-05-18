@@ -18,6 +18,7 @@ var gameMode = "gamePlaying";
 var angle = 0;
 var score = 0;
 var timer = 5;
+var frame = 0;
 
 function preload() {
   for (var i = 0; i < 5; i++) {
@@ -57,6 +58,15 @@ function draw() {
 
   switch (gameMode) {
     case "gamePlaying":
+      frame++;
+      if (frame >= 60) {
+        if (timer > 0) {
+          timer--;
+          frame = 0;
+        } else {
+          gameState = 'end';
+        }
+      }
       gamePlaying();
       break;
     case "gameClickedFirstPotion":
