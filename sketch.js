@@ -1,9 +1,9 @@
-var potions = [[], [], [], [], [], [], [], []]; 
+var potions = [[], [], [], [], [], [], [], []];
 
 // Image Variables
-var backgroundImage; 
+var backgroundImage;
 var potionImages = [];
-var boardImage; 
+var boardImage;
 var collectedAnimation;
 
 // Sound Variables
@@ -14,22 +14,25 @@ var collectedSound = [];
 var clickedX = 0;
 var clickedY = 0;
 var movingTimer = 0;
-var gameMode = 'gamePlaying';
+var gameMode = "gamePlaying";
 
 function preload() {
-  for (var i = 0; i < 5; i++){
-    potionImages[i] = loadImage(`./images/potion${i+1}.png`); 
+  for (var i = 0; i < 5; i++) {
+    potionImages[i] = loadImage(`./images/potion${i + 1}.png`);
   }
-  for (var i = 0; i < 3; i++){
-    collectedSound[i] = loadSound(`./sound/positive${i+1}.wav`);
+  for (var i = 0; i < 3; i++) {
+    collectedSound[i] = loadSound(`./sound/positive${i + 1}.wav`);
   }
-  backgroundImage = loadImage('./images/background.jpg');
-  collectedAnimation = loadAnimation('./images/sparkle/burst0001.png', './images/sparkle/burst0060.png');
+  backgroundImage = loadImage("./images/background.jpg");
+  collectedAnimation = loadAnimation(
+    "./images/sparkle/burst0001.png",
+    "./images/sparkle/burst0060.png"
+  );
 }
 
 function setup() {
   createCanvas(745, 600);
-  
+
   createBoard();
 }
 
@@ -37,30 +40,34 @@ function draw() {
   background(backgroundImage);
   drawSprites();
 
-  switch(gameMode){
-    case 'gamePlaying':
+  switch (gameMode) {
+    case "gamePlaying":
       gamePlaying();
       break;
-    case 'gameClickedFirstPotion':
+    case "gameClickedFirstPotion":
       gameClickedFirstPotion();
       break;
-    case 'gameMoving':
+    case "gameMoving":
       gameMoving();
       break;
   }
 }
 
 function createBoard() {
-  for (var j = 0; j < 8; j++){
-    for (var i = 0; i < 8; i++){
+  for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < 8; i++) {
       var potion = createSprite(getPositionX(i), getPositionY(j));
 
-      for (var colorNumber = 0; colorNumber < potionImages.length; colorNumber++){
-       potion.addImage('color' + colorNumber, potionImages[colorNumber]);
+      for (
+        var colorNumber = 0;
+        colorNumber < potionImages.length;
+        colorNumber++
+      ) {
+        potion.addImage("color" + colorNumber, potionImages[colorNumber]);
       }
 
       potion.colorNumber = floor(random(5));
-      potion.changeImage('color' + potion.colorNumber);
+      potion.changeImage("color" + potion.colorNumber);
 
       potion.cellX = i;
       potion.cellY = j;
@@ -72,31 +79,43 @@ function createBoard() {
   }
 }
 
-function potionClicked(potion){
-  switch(gameMode) {
-    case 'gamePlaying':
+function potionClicked(potion) {
+  switch (gameMode) {
+    case "gamePlaying":
       clickedX = potion.cellX;
       clickedY = potion.cellY;
-      gameMode = 'gameClickedFirstPotion';
+      gameMode = "gameClickedFirstPotion";
       break;
-    case 'gameClickedFirstPotion':
+    case "gameClickedFirstPotion":
       var colorNumber1 = potions[clickedY][clickedX].colorNumber;
       var colorNumber2 = potion.colorNumber;
-      setPotionInformation(potion.cellX, potion.cellY, clickedX, clickedY, colorNumber1);
-      setPotionInformation(clickedX, clickedY, potion.cellX, potion.cellY, colorNumber2);
+      setPotionInformation(
+        potion.cellX,
+        potion.cellY,
+        clickedX,
+        clickedY,
+        colorNumber1
+      );
+      setPotionInformation(
+        clickedX,
+        clickedY,
+        potion.cellX,
+        potion.cellY,
+        colorNumber2
+      );
       movingTimer = 30;
-      gameMode = 'gameMoving';
+      gameMode = "gameMoving";
       break;
   }
 }
 
 // Set the potion information (from -> to)
-function setPotionInformation(toX, toY, fromX, fromY, fromColorNumber){
+function setPotionInformation(toX, toY, fromX, fromY, fromColorNumber) {
   // Set the color information
   potions[toY][toX].colorNumber = fromColorNumber;
   // Change the images
-  potions[toY][toX].changeImage('color' + fromColorNumber);
-  // Switch the position 
+  potions[toY][toX].changeImage("color" + fromColorNumber);
+  // Switch the position
   potions[toY][toX].position.x = getPositionX(fromX);
   potions[toY][toX].position.y = getPositionY(fromY);
   // Set the velocity
@@ -104,24 +123,29 @@ function setPotionInformation(toX, toY, fromX, fromY, fromColorNumber){
   potions[toY][toX].velocity.y = (getPositionY(toY) - getPositionY(fromY)) / 30;
 }
 
-function gamePlaying() {
+function gamePlaying() {}
 
-}
-
-function gameClickedFirstPotion(){
-
-}
+function gameClickedFirstPotion() {}
 
 function gameMoving() {
   movingTimer--;
 
   if (movingTimer == 0) {
     stopAllPotions();
-
-    // Display effect when gems are collected
-    createCollectedEffect();
-
-    gameMode = 'gamePlaying';
+    // Detect when three or more potions are lined up vert or horiz and raise a flag
+    setCollectedFlag();
+    // Count the collected potions
+    var collectedPotionsCount = countCollectedPotions();
+    // Check if potions are collected
+    if (collectedPotionsCount > 0) {
+      // Display effect when potions are collected
+      createCollectedEffect();
+      // Drop 
+      collectPotions();
+      movingTimer = 30;
+    } else {
+      gameMode = "gamePlaying";
+    }
   }
 }
 
@@ -138,6 +162,63 @@ function stopAllPotions() {
   }
 }
 
+function setCollectedFlag() {
+  // Set all flags to false
+  for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < 8; i++) {
+      potions[j][i].isCollected = false;
+    }
+  }
+  // Check all potions for vert or horiz
+  for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < 8; i++) {
+      // If there are 3 or more horiz, set flags to true
+      if (isSameHorizontal(i, j)) {
+        potions[j][i].isCollected = true;
+        potions[j][i + 1].isCollected = true;
+        potions[j][i + 2].isCollected = true;
+      }
+      if (isSameVertical(i, j)) {
+        potions[j][i].isCollected = true;
+        potions[j + 1][i].isCollected = true;
+        potions[j + 2][i].isCollected = true;
+      }
+    }
+  }
+}
+
+function isSameHorizontal(x, y) {
+  if (x < 6) {
+    if (potions[y][x].colorNumber == potions[y][x + 1].colorNumber) {
+      if (potions[y][x + 1].colorNumber == potions[y][x + 2].colorNumber) {
+        return true;
+      }
+    }
+  }
+}
+
+function isSameVertical(x, y) {
+  if (y < 6) {
+    if (potions[y][x].colorNumber == potions[y + 1][x].colorNumber) {
+      if (potions[y + 1][x].colorNumber == potions[y + 2][x].colorNumber) {
+        return true;
+      }
+    }
+  }
+}
+
+function countCollectedPotions() {
+  var count = 0;
+  for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < 8; i++) {
+      if (potions[j][i].isCollected) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
 function createCollectedEffect() {
   // Play Collected Sound
   collectedSound[floor(random(3))].play();
@@ -145,12 +226,31 @@ function createCollectedEffect() {
   // Make a sparkle effect
   for (var j = 0; j < 8; j++) {
     for (var i = 0; i < 8; i++) {
-      // Make a sparkle effect sprite in the place of collected gems
-      var effect = createSprite(getPositionX(i), getPositionY(j));
-      // Add an animation to the sparkle effect
-      effect.addAnimation('collected', collectedAnimation);
-      // Set how long the sprite is displayed (it will automatically disappear)
-      effect.life = 30;
+      if (potions[j][i].isCollected) {
+        // Make a sparkle effect sprite in the place of collected potions
+        var effect = createSprite(getPositionX(i), getPositionY(j) + 8);
+        // Add an animation to the sparkle effect
+        effect.addAnimation("collected", collectedAnimation);
+        // Set how long the sprite is displayed 
+        effect.life = 40;
+      }
+    }
+  }
+}
+
+// Erase collected potions and line up more
+function collectPotions() {
+  for (var i = 0; i < 8; i++){
+    var collectedCount = 0;
+    for (var j = 7; j >= 0; j--){
+      if (potions[j][i].isCollected){
+        collectedCount++;
+      } else {
+        setPotionInformation(i, j + collectedCount, i, j, potions[j][i].colorNumber);
+      }
+    }
+    for (var j = 0; j < collectedCount; j++){
+      setPotionInformation(i, j, i, j - collectedCount, floor(random(5)));
     }
   }
 }
