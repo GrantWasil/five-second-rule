@@ -268,7 +268,7 @@ function countCollectedPotions() {
 
 function createCollectedEffect() {
   // Play Collected Sound
-  collectedSound[floor(random(6))].play();
+  collectedSound[floor(random(5))].play();
 
   // Make a sparkle effect
   for (var j = 0; j < 8; j++) {
