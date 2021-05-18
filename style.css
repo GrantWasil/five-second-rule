@@ -16,5 +16,12 @@ body {
 }
 
 canvas {
-  box-shadow: 3px 3px 10px grey;
+  box-shadow: 5px 5px 10px grey;
+}
+
+h1 {
+  font-size: 48px;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+  color: #E3C28A;
+  -webkit-text-stroke: 2px black;
 }
